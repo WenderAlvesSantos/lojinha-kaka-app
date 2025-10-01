@@ -20,7 +20,8 @@ export class AdminComponent implements OnInit {
   username = 'admin';
   password = '';
   loginError = '';
-  useApi = environment.production;
+  // Usar API se a URL estiver configurada e for diferente de localhost
+  useApi = environment.apiUrl.includes('vercel.app') || environment.apiUrl.includes('netlify.app');
 
   constructor(
     private inventoryService: InventoryService,

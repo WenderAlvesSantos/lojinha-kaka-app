@@ -11,7 +11,8 @@ import { environment } from '../../environments/environment';
 export class InventoryService {
   private productsSubject: BehaviorSubject<Product[]>;
   public products$: Observable<Product[]>;
-  private useApi = environment.production; // Usar API apenas em produção
+  // Usar API se a URL estiver configurada e for diferente de localhost
+  private useApi = environment.apiUrl.includes('vercel.app') || environment.apiUrl.includes('netlify.app');
 
   constructor(private apiService: ApiService) {
     this.productsSubject = new BehaviorSubject<Product[]>([]);
