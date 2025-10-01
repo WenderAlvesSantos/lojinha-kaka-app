@@ -1,0 +1,12 @@
+<div class="container">
+  <h1>Loja do Kaka — Estoque de Frutas</h1>
+  
+  <section class="grid">
+    <div class="card" *ngFor="let product of products$ | async">
+      <img [src]="product.imagem" [alt]="product.nome" />
+      <h2>{{ product.nome }}</h2>
+      <div class="qty">Estoque: {{ product.qtd }}</div>
+      <div class="price">Valor: {{ product.preco }}</div>
+    </div>
+  </section>
+</div>
