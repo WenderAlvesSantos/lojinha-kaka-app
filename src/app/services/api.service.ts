@@ -18,10 +18,14 @@ interface AuthResponse {
 export class ApiService {
   private apiUrl = environment.apiUrl;
   private tokenSubject = new BehaviorSubject<string | null>(
-    localStorage.getItem('auth_token')
+    this.isBrowser() ? localStorage.getItem('auth_token') : null
   );
 
   constructor(private http: HttpClient) {}
+
+  private isBrowser(): boolean {
+    return typeof window !== 'undefined' && typeof localStorage !== 'undefined';
+  }
 
   // Autenticação
   login(username: string, password: string): Observable<AuthResponse> {
@@ -30,14 +34,18 @@ export class ApiService {
       password
     }).pipe(
       tap(response => {
-        localStorage.setItem('auth_token', response.token);
+        if (this.isBrowser()) {
+          localStorage.setItem('auth_token', response.token);
+        }
         this.tokenSubject.next(response.token);
       })
     );
   }
 
   logout(): void {
-    localStorage.removeItem('auth_token');
+    if (this.isBrowser()) {
+      localStorage.removeItem('auth_token');
+    }
     this.tokenSubject.next(null);
   }
 

@@ -5,7 +5,6 @@ import { Observable } from 'rxjs';
 import { Product } from '../../models/product.model';
 import { InventoryService } from '../../services/inventory.service';
 import { ApiService } from '../../services/api.service';
-import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-admin',
@@ -20,8 +19,6 @@ export class AdminComponent implements OnInit {
   username = 'admin';
   password = '';
   loginError = '';
-  // Usar API se a URL estiver configurada e for diferente de localhost
-  useApi = environment.apiUrl.includes('vercel.app') || environment.apiUrl.includes('netlify.app');
 
   constructor(
     private inventoryService: InventoryService,
@@ -32,7 +29,7 @@ export class AdminComponent implements OnInit {
     this.products$ = this.inventoryService.products$;
     
     // Verificar se já está autenticado
-    if (this.useApi && this.apiService.isAuthenticated()) {
+    if (this.apiService.isAuthenticated()) {
       this.isAuthenticated = true;
     }
   }
@@ -40,36 +37,22 @@ export class AdminComponent implements OnInit {
   login(): void {
     this.loginError = '';
 
-    if (this.useApi) {
-      // Login via API com JWT
-      this.apiService.login(this.username, this.password).subscribe({
-        next: () => {
-          this.isAuthenticated = true;
-          this.password = '';
-        },
-        error: (error) => {
-          console.error('Erro no login:', error);
-          this.loginError = 'Credenciais inválidas';
-          this.password = '';
-        }
-      });
-    } else {
-      // Login local (desenvolvimento)
-      const ADMIN_PASSWORD = 'kaka123';
-      if (this.password === ADMIN_PASSWORD) {
+    // Login via API com JWT
+    this.apiService.login(this.username, this.password).subscribe({
+      next: () => {
         this.isAuthenticated = true;
         this.password = '';
-      } else {
-        this.loginError = 'Senha incorreta';
+      },
+      error: (error) => {
+        console.error('Erro no login:', error);
+        this.loginError = 'Credenciais inválidas';
         this.password = '';
       }
-    }
+    });
   }
 
   logout(): void {
-    if (this.useApi) {
-      this.apiService.logout();
-    }
+    this.apiService.logout();
     this.isAuthenticated = false;
     this.username = 'admin';
     this.password = '';
@@ -84,7 +67,7 @@ export class AdminComponent implements OnInit {
   }
 
   resetDefaults(): void {
-    if (confirm('Tem certeza que deseja resetar o estoque para os valores padrão?')) {
+    if (confirm('Tem certeza que deseja recarregar os produtos do banco?')) {
       this.inventoryService.resetToDefaults();
     }
   }

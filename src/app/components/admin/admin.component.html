@@ -10,7 +10,6 @@
       <h2>Área Administrativa</h2>
       
       <input
-        *ngIf="useApi"
         type="text"
         [(ngModel)]="username"
         placeholder="Usuário"
@@ -20,7 +19,7 @@
       <input
         type="password"
         [(ngModel)]="password"
-        [placeholder]="useApi ? 'Senha' : 'Digite a senha de administrador'"
+        placeholder="Senha"
         (keydown.enter)="login()"
         autofocus
       />
@@ -29,8 +28,7 @@
       
       <div class="error" *ngIf="loginError">{{ loginError }}</div>
       
-      <p class="hint" *ngIf="!useApi">Modo desenvolvimento: senha = kaka123</p>
-      <p class="hint" *ngIf="useApi">Use suas credenciais do banco de dados</p>
+      <p class="hint">Use suas credenciais do banco de dados (usuário: admin, senha: kaka123)</p>
     </div>
   </div>
 
@@ -66,7 +64,7 @@
     </div>
 
     <footer>
-      {{ useApi ? 'Mudanças salvas no banco de dados.' : 'Mudanças salvas no localStorage.' }}
+      Mudanças salvas no banco de dados.
     </footer>
   </main>
 </div>
