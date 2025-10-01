@@ -1,11 +1,75 @@
 <div class="container">
+  <h1>Loja do Kaka — Estoque de Frutas</h1>
   
   <section class="grid">
-    <div class="card" *ngFor="let product of products$ | async">
+    <div 
+      class="card" 
+      *ngFor="let product of products$ | async"
+      (click)="openBuyModal(product)"
+      [class.out-of-stock]="product.qtd === 0"
+    >
       <img [src]="product.imagem" [alt]="product.nome" />
       <h2>{{ product.nome }}</h2>
-      <div class="qty">Estoque: {{ product.qtd }}</div>
+      <div class="qty" [class.no-stock]="product.qtd === 0">
+        Estoque: {{ product.qtd === 0 ? 'Esgotado' : product.qtd }}
+      </div>
       <div class="price">Valor: {{ product.preco }}</div>
+      <div class="buy-hint" *ngIf="product.qtd > 0">
+        Clique para comprar 🛒
+      </div>
     </div>
   </section>
+
+  <!-- Modal de Compra -->
+  <div class="modal-overlay" *ngIf="showBuyModal" (click)="closeBuyModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <button class="close-btn" (click)="closeBuyModal()">×</button>
+      
+      <div class="product-preview" *ngIf="selectedProduct">
+        <img [src]="selectedProduct.imagem" [alt]="selectedProduct.nome" />
+        <h2>{{ selectedProduct.nome }}</h2>
+        <p class="price-display">{{ selectedProduct.preco }}</p>
+        <p class="stock-info">{{ selectedProduct.qtd }} unidades disponíveis</p>
+      </div>
+
+      <div class="quantity-selector">
+        <label>Quantidade:</label>
+        <div class="quantity-controls">
+          <button 
+            type="button" 
+            class="qty-btn" 
+            (click)="decrementQuantity()"
+            [disabled]="quantity <= 1"
+          >
+            -
+          </button>
+          <input 
+            type="number" 
+            [(ngModel)]="quantity" 
+            min="1" 
+            [max]="selectedProduct?.qtd || 1"
+            readonly
+          />
+          <button 
+            type="button" 
+            class="qty-btn" 
+            (click)="incrementQuantity()"
+            [disabled]="quantity >= (selectedProduct?.qtd || 1)"
+          >
+            +
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="cancel-btn" (click)="closeBuyModal()">
+          Cancelar
+        </button>
+        <button class="whatsapp-btn" (click)="confirmPurchase()">
+          <span class="whatsapp-icon">💬</span>
+          Comprar via WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
