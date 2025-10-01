@@ -109,7 +109,26 @@ header {
 .toolbar {
   padding: 16px;
   text-align: center;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
   
+  .add-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    background: #20c997;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: #1baa7f;
+    }
+  }
+
   .reset-btn {
     padding: 10px 20px;
     border: none;
@@ -142,6 +161,33 @@ header {
   min-width: 180px;
   box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
   text-align: center;
+  position: relative;
+
+  .delete-product-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: #ff6b6b;
+    color: #fff;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+
+    &:hover {
+      opacity: 1;
+      background: #ee5a52;
+      transform: scale(1.1);
+    }
+  }
 
   h3 {
     margin: 0 0 6px;
@@ -204,9 +250,125 @@ footer {
   font-size: 13px;
 }
 
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 20px;
+}
+
+.modal-box {
+  background: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  color: #111;
+  width: 500px;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+
+  h2 {
+    margin: 0 0 20px;
+    font-size: 22px;
+    color: #0d1b2a;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    label {
+      font-weight: 600;
+      font-size: 14px;
+      color: #333;
+    }
+
+    input {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 15px;
+      box-sizing: border-box;
+
+      &:focus {
+        outline: none;
+        border-color: #0b6fbd;
+      }
+    }
+
+    small {
+      font-size: 12px;
+      color: #666;
+    }
+  }
+
+  .error {
+    color: #ef4444;
+    font-size: 14px;
+    text-align: center;
+    padding: 8px;
+    background: #fee;
+    border-radius: 6px;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 8px;
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .cancel-btn {
+      background: #e0e0e0;
+      color: #333;
+
+      &:hover {
+        background: #d0d0d0;
+      }
+    }
+
+    .submit-btn {
+      background: #0b6fbd;
+      color: #fff;
+
+      &:hover {
+        background: #095a9e;
+      }
+    }
+  }
+}
+
 @media (max-width: 520px) {
   .card {
     min-width: 140px;
+  }
+
+  .modal-box {
+    padding: 16px;
+
+    h2 {
+      font-size: 18px;
+    }
   }
 }
 

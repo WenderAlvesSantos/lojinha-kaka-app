@@ -19,6 +19,17 @@ export class AdminComponent implements OnInit {
   username = 'admin';
   password = '';
   loginError = '';
+  
+  // Novo produto
+  showAddProductModal = false;
+  newProduct = {
+    id: '',
+    nome: '',
+    qtd: 0,
+    preco: '',
+    imagem: ''
+  };
+  addProductError = '';
 
   constructor(
     private inventoryService: InventoryService,
@@ -69,6 +80,67 @@ export class AdminComponent implements OnInit {
   resetDefaults(): void {
     if (confirm('Tem certeza que deseja recarregar os produtos do banco?')) {
       this.inventoryService.resetToDefaults();
+    }
+  }
+
+  openAddProductModal(): void {
+    this.showAddProductModal = true;
+    this.newProduct = {
+      id: '',
+      nome: '',
+      qtd: 0,
+      preco: '',
+      imagem: ''
+    };
+    this.addProductError = '';
+  }
+
+  closeAddProductModal(): void {
+    this.showAddProductModal = false;
+    this.addProductError = '';
+  }
+
+  addProduct(): void {
+    this.addProductError = '';
+
+    // Validações
+    if (!this.newProduct.id || !this.newProduct.nome || !this.newProduct.preco) {
+      this.addProductError = 'Preencha todos os campos obrigatórios';
+      return;
+    }
+
+    // Formatar ID (lowercase, sem espaços)
+    this.newProduct.id = this.newProduct.id.toLowerCase().trim().replace(/\s+/g, '-');
+
+    // Adicionar prefixo /images/ se não tiver
+    if (this.newProduct.imagem && !this.newProduct.imagem.startsWith('/')) {
+      this.newProduct.imagem = `/images/${this.newProduct.imagem}`;
+    }
+
+    // Criar produto
+    this.inventoryService.createProduct(this.newProduct).subscribe({
+      next: () => {
+        this.closeAddProductModal();
+        alert('Produto adicionado com sucesso!');
+      },
+      error: (error) => {
+        console.error('Erro ao adicionar produto:', error);
+        this.addProductError = error.error?.error || 'Erro ao adicionar produto';
+      }
+    });
+  }
+
+  deleteProduct(productId: string, productName: string): void {
+    if (confirm(`Tem certeza que deseja deletar ${productName}?`)) {
+      this.inventoryService.deleteProduct(productId).subscribe({
+        next: () => {
+          alert('Produto deletado com sucesso!');
+        },
+        error: (error) => {
+          console.error('Erro ao deletar produto:', error);
+          alert('Erro ao deletar produto');
+        }
+      });
     }
   }
 }

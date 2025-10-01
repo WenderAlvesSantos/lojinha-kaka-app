@@ -33,6 +33,9 @@
   <!-- Main Content -->
   <main *ngIf="isAuthenticated">
     <div class="toolbar">
+      <button class="add-btn" (click)="openAddProductModal()">
+        + Adicionar Produto
+      </button>
       <button class="reset-btn" (click)="resetDefaults()">
         Resetar Estoque Padrão
       </button>
@@ -40,6 +43,13 @@
 
     <div class="cards-container">
       <div class="card" *ngFor="let product of products$ | async">
+        <button 
+          class="delete-product-btn" 
+          (click)="deleteProduct(product.id, product.nome)"
+          title="Deletar produto"
+        >
+          ×
+        </button>
         <h3>{{ product.nome }}</h3>
         <span class="qty">Quantidade: {{ product.qtd }}</span>
         <div class="controls">
@@ -65,4 +75,85 @@
       Mudanças salvas no banco de dados.
     </footer>
   </main>
+
+  <!-- Modal Adicionar Produto -->
+  <div class="modal-overlay" *ngIf="showAddProductModal" (click)="closeAddProductModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <h2>Adicionar Novo Produto</h2>
+      
+      <form (ngSubmit)="addProduct()">
+        <div class="form-group">
+          <label for="productId">ID do Produto *</label>
+          <input
+            id="productId"
+            type="text"
+            [(ngModel)]="newProduct.id"
+            name="id"
+            placeholder="ex: dragon"
+            required
+          />
+          <small>Será formatado automaticamente (minúsculo, sem espaços)</small>
+        </div>
+
+        <div class="form-group">
+          <label for="productName">Nome *</label>
+          <input
+            id="productName"
+            type="text"
+            [(ngModel)]="newProduct.nome"
+            name="nome"
+            placeholder="ex: Dragon"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="productQty">Quantidade Inicial</label>
+          <input
+            id="productQty"
+            type="number"
+            [(ngModel)]="newProduct.qtd"
+            name="qtd"
+            placeholder="0"
+            min="0"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="productPrice">Preço *</label>
+          <input
+            id="productPrice"
+            type="text"
+            [(ngModel)]="newProduct.preco"
+            name="preco"
+            placeholder="ex: R$25,00"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="productImage">Nome da Imagem</label>
+          <input
+            id="productImage"
+            type="text"
+            [(ngModel)]="newProduct.imagem"
+            name="imagem"
+            placeholder="ex: Dragon_Fruit.webp"
+          />
+          <small>Coloque o arquivo em /public/images/ e digite apenas o nome</small>
+        </div>
+
+        <div class="error" *ngIf="addProductError">{{ addProductError }}</div>
+
+        <div class="modal-actions">
+          <button type="button" class="cancel-btn" (click)="closeAddProductModal()">
+            Cancelar
+          </button>
+          <button type="submit" class="submit-btn">
+            Adicionar Produto
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
