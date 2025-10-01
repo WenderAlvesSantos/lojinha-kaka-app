@@ -30,6 +30,8 @@ export class AdminComponent implements OnInit {
     imagem: ''
   };
   addProductError = '';
+  uploadingImage = false;
+  selectedFile: File | null = null;
 
   constructor(
     private inventoryService: InventoryService,
@@ -93,11 +95,37 @@ export class AdminComponent implements OnInit {
       imagem: ''
     };
     this.addProductError = '';
+    this.selectedFile = null;
+    this.uploadingImage = false;
   }
 
   closeAddProductModal(): void {
     this.showAddProductModal = false;
     this.addProductError = '';
+    this.selectedFile = null;
+    this.uploadingImage = false;
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      
+      // Validar tipo
+      if (!file.type.startsWith('image/')) {
+        this.addProductError = 'Apenas imagens são permitidas';
+        return;
+      }
+      
+      // Validar tamanho (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        this.addProductError = 'Imagem muito grande (máximo 5MB)';
+        return;
+      }
+      
+      this.selectedFile = file;
+      this.addProductError = '';
+    }
   }
 
   addProduct(): void {
@@ -112,18 +140,39 @@ export class AdminComponent implements OnInit {
     // Formatar ID (lowercase, sem espaços)
     this.newProduct.id = this.newProduct.id.toLowerCase().trim().replace(/\s+/g, '-');
 
-    // Adicionar prefixo /images/ se não tiver
-    if (this.newProduct.imagem && !this.newProduct.imagem.startsWith('/')) {
-      this.newProduct.imagem = `/images/${this.newProduct.imagem}`;
+    // Se tem arquivo selecionado, fazer upload primeiro
+    if (this.selectedFile) {
+      this.uploadingImage = true;
+      
+      this.apiService.uploadImage(this.selectedFile).subscribe({
+        next: (response) => {
+          this.newProduct.imagem = response.url;
+          this.createProductInDatabase();
+        },
+        error: (error) => {
+          this.uploadingImage = false;
+          console.error('Erro ao fazer upload:', error);
+          this.addProductError = 'Erro ao fazer upload da imagem';
+        }
+      });
+    } else {
+      // Se não tem arquivo mas tem texto, usar como URL
+      if (this.newProduct.imagem && !this.newProduct.imagem.startsWith('http')) {
+        this.newProduct.imagem = `/images/${this.newProduct.imagem}`;
+      }
+      this.createProductInDatabase();
     }
+  }
 
-    // Criar produto
+  private createProductInDatabase(): void {
     this.inventoryService.createProduct(this.newProduct).subscribe({
       next: () => {
+        this.uploadingImage = false;
         this.closeAddProductModal();
         alert('Produto adicionado com sucesso!');
       },
       error: (error) => {
+        this.uploadingImage = false;
         console.error('Erro ao adicionar produto:', error);
         this.addProductError = error.error?.error || 'Erro ao adicionar produto';
       }

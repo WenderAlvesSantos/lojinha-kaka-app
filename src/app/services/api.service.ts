@@ -129,5 +129,17 @@ export class ApiService {
     }
     return this.http.get<any[]>(url, { headers: this.getAuthHeaders() });
   }
+
+  // Upload de imagem
+  uploadImage(file: File): Observable<{ url: string; publicId: string; thumbnail: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    return this.http.post<{ url: string; publicId: string; thumbnail: string }>(
+      `${this.apiUrl}/upload`,
+      formData,
+      { headers: this.getAuthHeaders() }
+    );
+  }
 }
 
