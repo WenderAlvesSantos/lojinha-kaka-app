@@ -1,89 +1,291 @@
 <div class="admin-container">
-  <header>
-    <h1>Painel Admin - Estoque</h1>
-    <button *ngIf="isAuthenticated" class="logout-btn" (click)="logout()">Sair</button>
-  </header>
-
   <!-- Login Overlay -->
   <div class="login-overlay" *ngIf="!isAuthenticated">
     <div class="login-box">
-      <h2>Área Administrativa</h2>
+      <div class="login-header">
+        <div class="login-icon">🔐</div>
+        <h2>Área Administrativa</h2>
+        <p class="login-subtitle">Faça login para gerenciar o estoque</p>
+      </div>
       
-      <input
-        type="text"
-        [(ngModel)]="username"
-        placeholder="Usuário"
-        (keydown.enter)="login()"
-      />
-      
-      <input
-        type="password"
-        [(ngModel)]="password"
-        placeholder="Senha"
-        (keydown.enter)="login()"
-        autofocus
-      />
-      
-      <button (click)="login()">Entrar</button>
-      
-      <div class="error" *ngIf="loginError">{{ loginError }}</div>
+      <form (ngSubmit)="login()">
+        <div class="input-group">
+          <label for="username">Usuário</label>
+          <input
+            id="username"
+            type="text"
+            [(ngModel)]="username"
+            name="username"
+            placeholder="Digite seu usuário"
+            (keydown.enter)="login()"
+            autocomplete="username"
+          />
+        </div>
+        
+        <div class="input-group">
+          <label for="password">Senha</label>
+          <input
+            id="password"
+            type="password"
+            [(ngModel)]="password"
+            name="password"
+            placeholder="Digite sua senha"
+            (keydown.enter)="login()"
+            autocomplete="current-password"
+            autofocus
+          />
+        </div>
+        
+        <div class="error-message" *ngIf="loginError">
+          <span class="error-icon">⚠️</span>
+          {{ loginError }}
+        </div>
+        
+        <button type="submit" class="login-btn">
+          <span>Entrar</span>
+          <span class="btn-arrow">→</span>
+        </button>
+      </form>
     </div>
   </div>
 
   <!-- Main Content -->
   <main *ngIf="isAuthenticated">
+    <!-- Header -->
+    <header class="admin-header">
+      <div class="header-content">
+        <div class="header-title">
+          <h1>📊 Painel Administrativo</h1>
+          <p class="header-subtitle">Gerenciamento de Estoque</p>
+        </div>
+        <button class="logout-btn" (click)="logout()">
+          <span class="logout-icon">🚪</span>
+          Sair
+        </button>
+      </div>
+    </header>
+
+    <!-- Estatísticas -->
+    <section class="stats-section">
+      <div class="stat-card stat-primary">
+        <div class="stat-icon-wrapper">
+          <div class="stat-icon">📦</div>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ totalProducts }}</div>
+          <div class="stat-label">Total de Produtos</div>
+          <div class="stat-trend">Cadastrados no sistema</div>
+        </div>
+        <div class="stat-decoration"></div>
+      </div>
+      
+      <div class="stat-card stat-info">
+        <div class="stat-icon-wrapper">
+          <div class="stat-icon">📊</div>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ totalStock }}</div>
+          <div class="stat-label">Estoque Total</div>
+          <div class="stat-trend">Unidades disponíveis</div>
+        </div>
+        <div class="stat-decoration"></div>
+      </div>
+      
+      <div class="stat-card stat-warning" *ngIf="outOfStockCount > 0">
+        <div class="stat-icon-wrapper">
+          <div class="stat-icon">⚠️</div>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ outOfStockCount }}</div>
+          <div class="stat-label">Produtos Esgotados</div>
+          <div class="stat-trend">Requer atenção</div>
+        </div>
+        <div class="stat-decoration"></div>
+      </div>
+      
+      <div class="stat-card stat-success" *ngIf="outOfStockCount === 0 && totalProducts > 0">
+        <div class="stat-icon-wrapper">
+          <div class="stat-icon">✅</div>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">100%</div>
+          <div class="stat-label">Estoque Completo</div>
+          <div class="stat-trend">Todos os produtos disponíveis</div>
+        </div>
+        <div class="stat-decoration"></div>
+      </div>
+    </section>
+
+    <!-- Toolbar -->
     <div class="toolbar">
-      <button class="add-btn" (click)="openAddProductModal()">
-        + Adicionar Produto
-      </button>
-      <button class="reset-btn" (click)="resetDefaults()">
-        Resetar Estoque Padrão
-      </button>
+      <div class="search-container">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input 
+            type="text" 
+            class="search-input"
+            placeholder="Buscar produto por nome ou ID..."
+            [ngModel]="searchTerm"
+            (ngModelChange)="onSearchChange($event)"
+          />
+          <button 
+            class="clear-search-btn"
+            *ngIf="searchTerm"
+            (click)="clearSearch()"
+            type="button"
+            aria-label="Limpar busca"
+          >
+            ✕
+          </button>
+        </div>
+        <div class="search-results" *ngIf="(filteredProducts$ | async) as products">
+          <span *ngIf="searchTerm">
+            {{ products.length }} produto{{ products.length !== 1 ? 's' : '' }} encontrado{{ products.length !== 1 ? 's' : '' }}
+          </span>
+        </div>
+      </div>
+      
+      <div class="toolbar-actions">
+        <button class="add-btn" (click)="openAddProductModal()">
+          <span class="btn-icon">➕</span>
+          Adicionar Produto
+        </button>
+        <button class="reset-btn" (click)="resetDefaults()">
+          <span class="btn-icon">🔄</span>
+          Resetar Estoque
+        </button>
+      </div>
     </div>
 
-    <div class="cards-container">
-      <div class="card" *ngFor="let product of products$ | async">
-        <button 
-          class="delete-product-btn" 
-          (click)="deleteProduct(product.id, product.nome)"
-          title="Deletar produto"
-        >
-          ×
-        </button>
-        <h3>{{ product.nome }}</h3>
-        <span class="qty">Quantidade: {{ product.qtd }}</span>
-        <div class="controls">
-          <button 
-            class="plus" 
-            (click)="increment(product.id)"
-            [attr.aria-label]="'Aumentar ' + product.nome"
-          >
-            +
+    <!-- Products Table -->
+    <div class="table-container">
+      <table class="products-table">
+        <thead>
+          <tr>
+            <th class="product-column">Produto</th>
+            <th class="stock-column">Estoque</th>
+            <th class="price-column">Preço</th>
+            <th class="actions-column">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let product of filteredProducts$ | async" [class.out-of-stock]="product.qtd === 0">
+            <td class="product-cell">
+              <div class="product-info">
+                <div class="product-image-wrapper">
+                  <img [src]="product.imagem" [alt]="product.nome" class="product-image" />
+                  <div class="image-overlay" *ngIf="product.qtd === 0">
+                    <span>Esgotado</span>
+                  </div>
+                </div>
+                <div class="product-details">
+                  <div class="product-name">{{ product.nome }}</div>
+                  <div class="product-id">
+                    <span class="id-label">ID:</span>
+                    <span class="id-value">{{ product.id }}</span>
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td class="stock-cell">
+              <div class="stock-display">
+                <div class="stock-header">
+                  <span class="stock-value" [class.zero]="product.qtd === 0">{{ product.qtd }}</span>
+                  <span class="stock-label">unidades</span>
+                </div>
+                <div class="stock-bar">
+                  <div class="stock-bar-fill" [style.width.%]="product.qtd > 0 ? 100 : 0" [class.zero]="product.qtd === 0"></div>
+                </div>
+                <div class="stock-status" [class.warning]="product.qtd === 0">
+                  <span *ngIf="product.qtd === 0">⚠️ Sem estoque</span>
+                  <span *ngIf="product.qtd > 0 && product.qtd <= 3">⚠️ Estoque baixo</span>
+                  <span *ngIf="product.qtd > 3">✓ Em estoque</span>
+                </div>
+              </div>
+            </td>
+            <td class="price-cell">
+              <div class="price-display">
+                <span class="price-value">{{ product.preco }}</span>
+              </div>
+            </td>
+            <td class="actions-cell">
+              <div class="action-buttons">
+                <button 
+                  class="action-btn increment-btn" 
+                  (click)="increment(product.id)"
+                  [attr.aria-label]="'Aumentar estoque de ' + product.nome"
+                  title="Aumentar estoque"
+                >
+                  <span>+</span>
+                </button>
+                <button 
+                  class="action-btn decrement-btn" 
+                  (click)="decrement(product.id)"
+                  [attr.aria-label]="'Diminuir estoque de ' + product.nome"
+                  title="Diminuir estoque"
+                  [disabled]="product.qtd === 0"
+                >
+                  <span>−</span>
+                </button>
+                <button 
+                  class="action-btn delete-btn" 
+                  (click)="deleteProduct(product.id, product.nome)"
+                  [attr.aria-label]="'Deletar ' + product.nome"
+                  title="Deletar produto"
+                >
+                  <span>🗑️</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div class="empty-state" *ngIf="(filteredProducts$ | async) as products">
+        <div *ngIf="products.length === 0 && !searchTerm" class="empty-content">
+          <div class="empty-icon">📦</div>
+          <h3>Nenhum produto cadastrado</h3>
+          <p>Comece adicionando seu primeiro produto</p>
+          <button class="add-btn" (click)="openAddProductModal()">
+            <span class="btn-icon">➕</span>
+            Adicionar Primeiro Produto
           </button>
-          <button 
-            class="minus" 
-            (click)="decrement(product.id)"
-            [attr.aria-label]="'Diminuir ' + product.nome"
-          >
-            -
+        </div>
+        <div *ngIf="products.length === 0 && searchTerm" class="empty-search">
+          <div class="empty-icon">🔍</div>
+          <h3>Nenhum produto encontrado</h3>
+          <p>Tente buscar com outro termo</p>
+          <button class="clear-search-link" (click)="clearSearch()">
+            Limpar busca
           </button>
         </div>
       </div>
     </div>
 
-    <footer>
-      Mudanças salvas no banco de dados.
+    <!-- Footer -->
+    <footer class="admin-footer">
+      <div class="footer-content">
+        <span class="footer-icon">💾</span>
+        <span>Mudanças são salvas automaticamente no banco de dados</span>
+      </div>
     </footer>
   </main>
 
   <!-- Modal Adicionar Produto -->
   <div class="modal-overlay" *ngIf="showAddProductModal" (click)="closeAddProductModal()">
     <div class="modal-box" (click)="$event.stopPropagation()">
-      <h2>Adicionar Novo Produto</h2>
+      <div class="modal-header">
+        <h2>➕ Adicionar Novo Produto</h2>
+        <button class="modal-close-btn" (click)="closeAddProductModal()" type="button" [disabled]="uploadingImage">
+          ×
+        </button>
+      </div>
       
       <form (ngSubmit)="addProduct()">
         <div class="form-group">
-          <label for="productId">ID do Produto *</label>
+          <label for="productId">
+            ID do Produto <span class="required">*</span>
+          </label>
           <input
             id="productId"
             type="text"
@@ -91,12 +293,15 @@
             name="id"
             placeholder="ex: dragon"
             required
+            [disabled]="uploadingImage"
           />
           <small>Será formatado automaticamente (minúsculo, sem espaços)</small>
         </div>
 
         <div class="form-group">
-          <label for="productName">Nome *</label>
+          <label for="productName">
+            Nome do Produto <span class="required">*</span>
+          </label>
           <input
             id="productName"
             type="text"
@@ -104,31 +309,38 @@
             name="nome"
             placeholder="ex: Dragon"
             required
+            [disabled]="uploadingImage"
           />
         </div>
 
-        <div class="form-group">
-          <label for="productQty">Quantidade Inicial</label>
-          <input
-            id="productQty"
-            type="number"
-            [(ngModel)]="newProduct.qtd"
-            name="qtd"
-            placeholder="0"
-            min="0"
-          />
-        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="productQty">Quantidade Inicial</label>
+            <input
+              id="productQty"
+              type="number"
+              [(ngModel)]="newProduct.qtd"
+              name="qtd"
+              placeholder="0"
+              min="0"
+              [disabled]="uploadingImage"
+            />
+          </div>
 
-        <div class="form-group">
-          <label for="productPrice">Preço *</label>
-          <input
-            id="productPrice"
-            type="text"
-            [(ngModel)]="newProduct.preco"
-            name="preco"
-            placeholder="ex: R$25,00"
-            required
-          />
+          <div class="form-group">
+            <label for="productPrice">
+              Preço <span class="required">*</span>
+            </label>
+            <input
+              id="productPrice"
+              type="text"
+              [(ngModel)]="newProduct.preco"
+              name="preco"
+              placeholder="ex: R$25,00"
+              required
+              [disabled]="uploadingImage"
+            />
+          </div>
         </div>
 
         <div class="form-group">
@@ -141,15 +353,18 @@
                 id="imageFile"
                 accept="image/*"
                 (change)="onFileSelected($event)"
-                [disabled]="uploadingImage"
+                [disabled]="uploadingImage || newProduct.imagem"
               />
-              <label for="imageFile" class="file-label">
-                <span *ngIf="!selectedFile">📁 Escolher Arquivo</span>
-                <span *ngIf="selectedFile">✓ {{ selectedFile.name }}</span>
+              <label for="imageFile" class="file-label" [class.has-file]="selectedFile">
+                <span class="upload-icon">📁</span>
+                <span *ngIf="!selectedFile">Escolher Arquivo</span>
+                <span *ngIf="selectedFile" class="file-name">✓ {{ selectedFile.name }}</span>
               </label>
             </div>
             
-            <div class="or-divider">OU</div>
+            <div class="or-divider">
+              <span>OU</span>
+            </div>
             
             <input
               id="productImage"
@@ -157,27 +372,36 @@
               [(ngModel)]="newProduct.imagem"
               name="imagem"
               placeholder="URL da imagem ou nome do arquivo local"
-              [disabled]="selectedFile !== null"
+              [disabled]="selectedFile !== null || uploadingImage"
             />
           </div>
           
-          <small *ngIf="!selectedFile">
+          <small *ngIf="!selectedFile && !newProduct.imagem">
             Faça upload de uma imagem ou digite URL/nome do arquivo local
           </small>
-          <small *ngIf="selectedFile">
+          <small *ngIf="selectedFile" class="file-info">
             Arquivo selecionado. Será enviado ao clicar em "Adicionar Produto"
           </small>
         </div>
 
-        <div class="error" *ngIf="addProductError">{{ addProductError }}</div>
+        <div class="error-message" *ngIf="addProductError">
+          <span class="error-icon">⚠️</span>
+          {{ addProductError }}
+        </div>
 
         <div class="modal-actions">
           <button type="button" class="cancel-btn" (click)="closeAddProductModal()" [disabled]="uploadingImage">
             Cancelar
           </button>
           <button type="submit" class="submit-btn" [disabled]="uploadingImage">
-            <span *ngIf="!uploadingImage">Adicionar Produto</span>
-            <span *ngIf="uploadingImage">Enviando imagem...</span>
+            <span *ngIf="!uploadingImage">
+              <span class="btn-icon">✓</span>
+              Adicionar Produto
+            </span>
+            <span *ngIf="uploadingImage" class="loading">
+              <span class="spinner"></span>
+              Enviando imagem...
+            </span>
           </button>
         </div>
       </form>

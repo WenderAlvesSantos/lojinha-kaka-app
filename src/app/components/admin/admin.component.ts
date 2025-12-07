@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject, combineLatest, map, debounceTime, distinctUntilChanged } from 'rxjs';
 import { Product } from '../../models/product.model';
 import { InventoryService } from '../../services/inventory.service';
 import { ApiService } from '../../services/api.service';
@@ -15,10 +15,23 @@ import { ApiService } from '../../services/api.service';
 })
 export class AdminComponent implements OnInit {
   products$!: Observable<Product[]>;
+  filteredProducts$!: Observable<Product[]>;
   isAuthenticated = false;
   username = 'admin';
   password = '';
   loginError = '';
+  
+  // Filtro
+  private searchTermSubject = new BehaviorSubject<string>('');
+  searchTerm$ = this.searchTermSubject.asObservable().pipe(
+    debounceTime(300),
+    distinctUntilChanged()
+  );
+  
+  // Estatísticas
+  totalProducts = 0;
+  totalStock = 0;
+  outOfStockCount = 0;
   
   // Novo produto
   showAddProductModal = false;
@@ -41,10 +54,46 @@ export class AdminComponent implements OnInit {
   ngOnInit(): void {
     this.products$ = this.inventoryService.products$;
     
+    // Filtragem com debounce
+    this.filteredProducts$ = combineLatest([
+      this.products$,
+      this.searchTerm$
+    ]).pipe(
+      map(([products, term]) => {
+        if (!term || term.trim() === '') {
+          return products;
+        }
+        const searchLower = term.toLowerCase().trim();
+        return products.filter(product => 
+          product.nome.toLowerCase().includes(searchLower) ||
+          product.id.toLowerCase().includes(searchLower)
+        );
+      })
+    );
+    
+    // Calcular estatísticas
+    this.products$.subscribe(products => {
+      this.totalProducts = products.length;
+      this.totalStock = products.reduce((sum, p) => sum + p.qtd, 0);
+      this.outOfStockCount = products.filter(p => p.qtd === 0).length;
+    });
+    
     // Verificar se já está autenticado
     if (this.apiService.isAuthenticated()) {
       this.isAuthenticated = true;
     }
+  }
+
+  onSearchChange(term: string): void {
+    this.searchTermSubject.next(term);
+  }
+
+  clearSearch(): void {
+    this.searchTermSubject.next('');
+  }
+
+  get searchTerm(): string {
+    return this.searchTermSubject.value;
   }
 
   login(): void {
